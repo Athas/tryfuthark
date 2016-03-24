@@ -1,12 +1,12 @@
 package main
 
 import (
-	"io/ioutil"
-	"net/http"
-	"html/template"
-	"regexp"
 	"crypto/md5"
 	"fmt"
+	"html/template"
+	"io/ioutil"
+	"net/http"
+	"regexp"
 )
 
 // This function feels a little superfluous.
@@ -22,7 +22,7 @@ var templates = template.Must(template.ParseFiles("prog.html", "add.html"))
 // Need some initialisation code to ensure this directory always
 // exists.
 var progdir = "prog"
-var progPath = regexp.MustCompile("^/prog/([a-zA-Z0-9]+)$")
+var progPath = regexp.MustCompile("^/([a-zA-Z0-9]+)$")
 
 func loadProg(hash string) (string, error) {
 	filename := progdir + "/" + hash + ".fut"
@@ -50,10 +50,17 @@ func progHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	p := make(map[string]string)
-	p["Hash"] = hash
-	p["Code"] = code
-	renderTemplate(w, "prog", p)
+	//p := make(map[string]string)
+	//p["Hash"] = hash
+	//p["Code"] = code
+	// structs are quicker than map[string]string
+	renderTemplate(w, "prog", struct {
+		Hash string
+		Code string
+	}{
+		hash,
+		code,
+	})
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,16 +73,35 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Here we should also spawn some process to compile the
 	// program.
-	http.Redirect(w, r, "/prog/"+title, http.StatusFound)
+	http.Redirect(w, r, "/"+title, http.StatusFound)
 }
 
 func addHandler(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, "add", make(map[string]string))
+	// Providing an empty interface{} is quicker than making
+	// an empty map[string]string.
+	renderTemplate(w, "add", nil)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		// We are trying to save a program
+		saveHandler(w, r)
+		return
+	}
+	if r.URL.Path != "/" {
+		// We are looking for some program
+		progHandler(w, r)
+		return
+	}
+	// If nothing else, then we are just trying to add one.
+	addHandler(w, r)
 }
 
 func main() {
-	http.HandleFunc("/prog/", progHandler)
-	http.HandleFunc("/save/", saveHandler)
-	http.HandleFunc("/add/", addHandler)
+	// http.HandleFunc("/prog/", progHandler)
+	// http.HandleFunc("/save/", saveHandler)
+	// http.HandleFunc("/add/", addHandler)
+	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8080", nil)
 }
+
