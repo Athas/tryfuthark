@@ -50,10 +50,6 @@ func progHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	//p := make(map[string]string)
-	//p["Hash"] = hash
-	//p["Code"] = code
-	// structs are quicker than map[string]string
 	renderTemplate(w, "prog", struct {
 		Hash string
 		Code string
