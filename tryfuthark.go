@@ -98,9 +98,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// http.HandleFunc("/prog/", progHandler)
-	// http.HandleFunc("/save/", saveHandler)
-	// http.HandleFunc("/add/", addHandler)
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8080", nil)
 }
